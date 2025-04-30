@@ -1,0 +1,48 @@
+models:
+  User:
+    relationships:
+      hasMany: Budget, Category, Transaction, Subcategory
+
+  Budget:
+    user_id: belongsTo:User:cascade:index
+    name: string:255
+    total_amount: decimal:10,4:default(0.0000)
+    start_date: date
+    end_date: date
+    relationships:
+      hasMany: BudgetCategory
+
+  Category:
+    user_id: belongsTo:User:cascade:index
+    name: string:255:index
+    type: enum:income,expense
+    indexes:
+      - unique: user_id, name, type
+    relationships:
+      hasMany: Subcategory, Transaction
+      belongsToMany: Budget:&BudgetCategory
+
+  Subcategory:
+    category_id: belongsTo:Category:cascade:index
+    user_id: belongsTo:User:cascade:index
+    name: string:255:index
+    indexes:
+      - unique: user_id, category_id, name
+    relationships:
+      hasMany: Transaction
+
+  Transaction:
+    user_id: belongsTo:User:cascade:index
+    type: enum:income,expense
+    amount: decimal:10,4
+    category_id: belongsTo:Category:restrict:index
+    subcategory_id: nullable belongsTo:Subcategory:setNull:index
+    transaction_date: date
+    description: nullable text
+
+  BudgetCategory:
+    budget_id: belongsTo:Budget:cascade:index
+    category_id: belongsTo:Category:cascade:index
+    budgeted_amount: decimal:10,4:default(0.0000)
+    indexes:
+      - unique: budget_id, category_id

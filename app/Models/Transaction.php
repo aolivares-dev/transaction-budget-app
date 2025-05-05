@@ -39,8 +39,14 @@ class Transaction extends Model
         ];
     }
 
-    public function category(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function category()
     {
         return $this->belongsTo(Category::class);
     }
+
+    public function budgets()
+    {
+        return $this->belongsToMany(Budget::class, 'budget_categories', 'category_id', 'budget_id');
+    }
+
 }

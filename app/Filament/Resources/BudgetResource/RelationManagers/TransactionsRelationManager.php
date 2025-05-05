@@ -1,24 +1,22 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\BudgetResource\RelationManagers;
 
-use App\Filament\Resources\TransactionResource\Pages;
 use App\Models\Category;
-use App\Models\Transaction;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Resources\Resource;
+use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Date;
 
-class TransactionResource extends Resource
+class  TransactionsRelationManager extends RelationManager
 {
-    protected static ?string $model = Transaction::class;
+    protected static string $relationship = 'transactions';
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-
-    public static function form(Form $form): Form
+    public function form(Form $form): Form
     {
         return $form
             ->schema([
@@ -39,39 +37,11 @@ class TransactionResource extends Resource
 
                         if (!$type) return [];
 
-                        return Category::where([
-                            'type' => $type,
-                            'user_id' => auth()->id(),
-                        ])
-                            ->orderBy('name')
+                        return Category::where(['type' => $type, 'user_id' => auth()->id()])
                             ->pluck('name', 'id')
                             ->toArray();
                     })
                     ->required()
-                    ->createOptionForm(function (callable $get) {
-                        $type = $get('type');
-
-                        return [
-                            Forms\Components\Hidden::make('user_id')
-                                ->default(auth()->id())
-                                ->required(),
-
-                            Forms\Components\Select::make('type')
-                                ->options([
-                                    'income' => 'Ingreso',
-                                    'expense' => 'Gasto',
-                                ])
-                                ->required()
-                                ->default($type),
-
-                            Forms\Components\TextInput::make('name')
-                                ->required()
-                                ->maxLength(255),
-                        ];
-                    })
-                    ->createOptionUsing(function (array $data) {
-                        return Category::create($data)->id; // ← Este ID se selecciona automáticamente
-                    })
                     ->disabled(fn(callable $get) => !$get('type')),
                 Forms\Components\TextInput::make('amount')
                     ->default(0.00)
@@ -85,17 +55,17 @@ class TransactionResource extends Resource
             ]);
     }
 
-    public static function table(Table $table): Table
+    public function table(Table $table): Table
     {
         return $table
+            ->recordTitleAttribute('xd')
             ->columns([
                 Tables\Columns\TextColumn::make('type')
                     ->label('Tipo')
                     ->formatStateUsing(fn(string $state): string => $state === 'income' ? 'Ingreso' : 'Gasto')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('amount')
-                    ->label('Monto')
-                    ->numeric(decimalPlaces: 2)
+                    ->label('Monto total')
                     ->money('USD', true)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('category.name')
@@ -115,8 +85,12 @@ class TransactionResource extends Resource
             ->filters([
                 //
             ])
+            ->headerActions([
+                Tables\Actions\CreateAction::make(),
+            ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -125,26 +99,11 @@ class TransactionResource extends Resource
             ]);
     }
 
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
-
-    public static function getPages(): array
-    {
-        return [
-            'index' => Pages\ListTransactions::route('/'),
-            'create' => Pages\CreateTransaction::route('/create'),
-            'edit' => Pages\EditTransaction::route('/{record}/edit'),
-        ];
-    }
-
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
         return parent::getEloquentQuery()
             ->where('user_id', auth()->id());
     }
+
 
 }

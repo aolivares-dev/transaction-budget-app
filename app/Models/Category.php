@@ -34,11 +34,6 @@ class Category extends Model
         ];
     }
 
-    public function subcategories(): HasMany
-    {
-        return $this->hasMany(Subcategory::class);
-    }
-
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);

@@ -76,14 +76,18 @@ class BudgetResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user_id')
-                    ->searchable(),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('total_amount')
-                    ->numeric()
+                    ->label('Monto total')
                     ->money('USD', true)
                     ->sortable(),
+                Tables\Columns\TextColumn::make('available_amount')
+                    ->label('Disponible')
+                    ->sortable()
+                    ->getStateUsing(fn($record) => '$' . number_format($record->getAvailableAmount(), 2))
+                    ->badge()
+                    ->color(fn($record) => $record->getAvailableAmount() <= 0 ? 'danger' : 'success'),
                 Tables\Columns\TextColumn::make('start_date')
                     ->date()
                     ->sortable(),
@@ -115,7 +119,7 @@ class BudgetResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\TransactionsRelationManager::class,
         ];
     }
 

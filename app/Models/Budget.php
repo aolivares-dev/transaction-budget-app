@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyCast;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -32,7 +33,7 @@ class Budget extends Model
     {
         return [
             'id' => 'integer',
-            'total_amount' => 'decimal:4',
+            'total_amount' => MoneyCast::class,
             'start_date' => 'date',
             'end_date' => 'date',
         ];

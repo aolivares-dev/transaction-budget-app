@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('budget_id');
             $table->string('category_id');
-            $table->decimal('budgeted_amount', 10, 4);
             $table->unique(['budget_id', 'category_id']);
             $table->timestamps();
         });

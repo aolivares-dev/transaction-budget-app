@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyCast;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -33,8 +34,13 @@ class Transaction extends Model
     {
         return [
             'id' => 'integer',
-            'amount' => 'decimal:4',
+            'amount' => MoneyCast::class,
             'transaction_date' => 'date',
         ];
+    }
+
+    public function category(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Category::class);
     }
 }

@@ -26,11 +26,15 @@ class CategoryResource extends Resource
                 Forms\Components\Hidden::make('user_id')
                     ->default(auth()->id())
                     ->required(),
+                Forms\Components\Select::make('type')
+                    ->options([
+                        'income' => 'Ingreso',
+                        'expense' => 'Gasto',
+                    ])
+                    ->required(),
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('type')
-                    ->required(),
             ]);
     }
 
@@ -38,11 +42,12 @@ class CategoryResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user_id')
-                    ->searchable(),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('type'),
+                Tables\Columns\TextColumn::make('type')
+                    ->label('Tipo')
+                    ->formatStateUsing(fn (string $state): string => $state === 'income' ? 'Ingreso' : 'Gasto')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -79,5 +84,12 @@ class CategoryResource extends Resource
             'create' => Pages\CreateCategory::route('/create'),
             'edit' => Pages\EditCategory::route('/{record}/edit'),
         ];
+    }
+
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()
+            ->where('user_id', auth()->id());
     }
 }

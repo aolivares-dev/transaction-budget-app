@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\BudgetResource\Pages;
 use App\Filament\Resources\BudgetResource\RelationManagers;
 use App\Models\Budget;
+use App\Models\Category;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -36,6 +37,38 @@ class BudgetResource extends Resource
                     ->required(),
                 Forms\Components\DatePicker::make('end_date')
                     ->required(),
+                Forms\Components\Repeater::make('categories')
+                    ->label('Categorías del presupuesto')
+                    ->relationship('budgetCategories')
+                    ->schema([
+                        Forms\Components\Select::make('category_id')
+                            ->label('Categoría')
+                            ->options(function (Forms\Get $get) {
+                                $repeaterData = $get('../../categories') ?? [];
+
+                                $selectedCategories = collect($repeaterData)
+                                    ->pluck('category_id')
+                                    ->filter()
+                                    ->toArray();
+
+                                $currentCategory = $get('category_id');
+
+                                if ($currentCategory) {
+                                    $selectedCategories = array_diff($selectedCategories, [$currentCategory]);
+                                }
+
+                                return Category::where(['user_id' => auth()->id(), 'type' => 'expense'])
+                                    ->when(count($selectedCategories), function ($query) use ($selectedCategories) {
+                                        $query->whereNotIn('id', $selectedCategories);
+                                    })
+                                    ->pluck('name', 'id');
+                            })
+                            ->reactive()
+                            ->required(),
+                    ])
+                    ->minItems(1)
+                    ->defaultItems(1)
+                    ->createItemButtonLabel('Agregar categoría')
             ]);
     }
 
@@ -49,6 +82,7 @@ class BudgetResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('total_amount')
                     ->numeric()
+                    ->money('USD', true)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('start_date')
                     ->date()
@@ -92,5 +126,12 @@ class BudgetResource extends Resource
             'create' => Pages\CreateBudget::route('/create'),
             'edit' => Pages\EditBudget::route('/{record}/edit'),
         ];
+    }
+
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()
+            ->where('user_id', auth()->id());
     }
 }

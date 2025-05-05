@@ -32,4 +32,14 @@ class BudgetCategory extends Model
             'budgeted_amount' => 'decimal:4',
         ];
     }
+
+    public function category(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Category::class);
+    }
+
+    public function budget(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Budget::class);
+    }
 }

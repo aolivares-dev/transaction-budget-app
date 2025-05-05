@@ -4,14 +4,15 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\TransactionResource\Pages;
 use App\Filament\Resources\TransactionResource\RelationManagers;
+use App\Models\Category;
 use App\Models\Transaction;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Date;
 
 class TransactionResource extends Resource
 {
@@ -26,17 +27,32 @@ class TransactionResource extends Resource
                 Forms\Components\Hidden::make('user_id')
                     ->default(auth()->id())
                     ->required(),
-                Forms\Components\TextInput::make('type')
-                    ->required(),
+                Forms\Components\Select::make('type')
+                    ->options([
+                        'income' => 'Ingreso',
+                        'expense' => 'Gasto',
+                    ])
+                    ->required()
+                    ->reactive(),
+                Forms\Components\Select::make('category_id')
+                    ->label('Categoría')
+                    ->options(function (callable $get) {
+                        $type = $get('type');
+
+                        if (!$type) return [];
+
+                        return Category::where(['type' => $type, 'user_id' => auth()->id()])
+                            ->pluck('name', 'id')
+                            ->toArray();
+                    })
+                    ->required()
+                    ->disabled(fn(callable $get) => !$get('type')),
                 Forms\Components\TextInput::make('amount')
+                    ->default(0.00)
                     ->required()
                     ->numeric(),
-                Forms\Components\TextInput::make('category_id')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('subcategory_id')
-                    ->maxLength(255),
                 Forms\Components\DatePicker::make('transaction_date')
+                    ->default(Date::make(now())->format('Y-m-d'))
                     ->required(),
                 Forms\Components\Textarea::make('description')
                     ->columnSpanFull(),
@@ -47,16 +63,17 @@ class TransactionResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user_id')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('type'),
-                Tables\Columns\TextColumn::make('amount')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('type')
+                    ->label('Tipo')
+                    ->formatStateUsing(fn(string $state): string => $state === 'income' ? 'Ingreso' : 'Gasto')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('category_id')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('subcategory_id')
-                    ->searchable(),
+                Tables\Columns\TextColumn::make('amount')
+                    ->label('Monto')
+                    ->numeric(decimalPlaces: 2)
+                    ->money('USD', true)
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('category.name')
+                    ->label('Categoría'),
                 Tables\Columns\TextColumn::make('transaction_date')
                     ->date()
                     ->sortable(),
@@ -97,4 +114,11 @@ class TransactionResource extends Resource
             'edit' => Pages\EditTransaction::route('/{record}/edit'),
         ];
     }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()
+            ->where('user_id', auth()->id());
+    }
+
 }

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('user_id');
             $table->enum('type', ["income","expense"]);
-            $table->decimal('amount', 10, 4);
+            $table->decimal('amount', 15, 4);
             $table->string('category_id');
             $table->string('subcategory_id')->nullable();
             $table->date('transaction_date')->index();

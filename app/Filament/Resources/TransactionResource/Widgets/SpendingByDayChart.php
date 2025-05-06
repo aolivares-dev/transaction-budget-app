@@ -6,12 +6,13 @@ use App\Models\Transaction;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
 
-    class SpendingByDayChart extends ChartWidget
+class SpendingByDayChart extends ChartWidget
 {
-    protected static ?string $heading = 'Gasto/Ingreso diario del mes';
+    protected static ?string $heading = 'Gasto Diario';
+    protected static ?string $chartSubHeading = 'Variación diaria (USD)';
     protected static ?string $maxHeight = '300px';
-    protected static ?string $pollingInterval = null; // Evita refrescos automáticos
-    protected static ?int $sort = 1; // Controla el orden del widget
+    protected static ?string $pollingInterval = null;
+    protected static ?int $sort = 1;
 
     protected function getData(): array
     {
@@ -19,19 +20,19 @@ use Illuminate\Support\Facades\DB;
             ->where('user_id', auth()->id())
             ->whereMonth('transaction_date', now()->month)
             ->whereYear('transaction_date', now()->year)
-            ->where('type', 'expense') // Filtra para mostrar solo gastos
+            ->where('type', 'expense')
             ->selectRaw('DATE(transaction_date) as date, SUM(amount) as total')
             ->groupBy('date')
             ->orderBy('date')
             ->pluck('total', 'date')
             ->map(function ($value) {
-                return round($value / 100, 2); // Apply MoneyCast logic directly
+                return round($value / 100, 2);
             });
 
         return [
             'datasets' => [
                 [
-                    'label' => 'Variación diaria (USD)',
+                    'label' => static::$chartSubHeading,
                     'data' => $data->values(),
                     'fill' => 'start',
                 ],
@@ -43,17 +44,5 @@ use Illuminate\Support\Facades\DB;
     protected function getType(): string
     {
         return 'bar';
-    }
-
-    protected function getColors(): array
-    {
-        return [
-            'datasets' => [
-                [
-                    'backgroundColor' => '#4CAF50',
-                    'borderColor' => '#388E3C',
-                ],
-            ],
-        ];
     }
 }

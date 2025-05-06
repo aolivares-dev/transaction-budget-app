@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Resources\TransactionResource\Widgets\ExpenseByCategoryChart;
 use App\Filament\Widgets\BudgetOverview;
 use App\Filament\Widgets\SpendingByDayChart;
 use App\Filament\Widgets\TotalBalanceStatsOverview;
@@ -43,8 +44,9 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                SpendingByDayChart::class,
                 TotalBalanceStatsOverview::class,
+                ExpenseByCategoryChart::class,
+                SpendingByDayChart::class,
             ])
             ->middleware([
                 EncryptCookies::class,
